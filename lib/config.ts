@@ -51,3 +51,5 @@ export const config : DeepLinkConfig[] =
       }
     }
   ];
+
+  //docker run --name deeplink-pg -e POSTGRES_USER=rootuser -e POSTGRES_PASSWORD=password -e POSTGRES_DB=deeplink-db -p 5432:5432 -d postgres:latest
