@@ -1,12 +1,18 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Req, Res } from '@nestjs/common';
 import { AppService } from './app.service';
+import { Request, Response } from 'express';
 
-@Controller()
+@Controller('*')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  getHello(
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    const userAgent = req.headers['user-agent'] || '';
+    const response= this.appService.getHello(userAgent, req.path);
+    return res.redirect(response);
   }
 }
