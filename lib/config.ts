@@ -25,15 +25,6 @@ export interface DeepLinkConfig {
 export const config : DeepLinkConfig[] =
   [
     {
-      "path": '/test',
-      "targets": {
-        "android": 'https://play.google.com/store/apps/details?id=com.twitter.android',
-        "ios": '"https://apps.apple.com/us/app/twitter/id333903271',
-        "desktop": "https://suja.vercel.app/",
-        "default": 'https://suja.vercel.app/',
-      },
-    },
-    {
       "path": "/deeplink",
       "targets": {
         "android": {

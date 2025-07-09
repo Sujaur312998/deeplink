@@ -7,12 +7,12 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  getHello(
+  async getHello(
     @Req() req: Request,
     @Res() res: Response
   ) {
     const userAgent = req.headers['user-agent'] || '';
-    const response= this.appService.getHello(userAgent, req.path);
+    const response= await this.appService.getLink(userAgent, req.path);
     return res.redirect(response);
   }
 }
