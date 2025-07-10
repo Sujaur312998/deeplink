@@ -7,6 +7,7 @@ import { AndroidAppDetails } from './entity/androidaAppdetails.entity';
 import { IOSAppDetails } from './entity/iosAppdetails.entity';
 import { DefaultDetails } from './entity/default.entity';
 import { Tergets } from './entity/tergets.entity';
+import { DeepLinkPaginationDto } from './dto/paginationDto';
 
 @Injectable()
 export class AppService {
@@ -70,27 +71,6 @@ export class AppService {
     return '/';
   }
 
-  // async createDeepLink(createDeepLinkDto: DeepLink) {
-  //   const { android, ios, default: defaultTarget } = createDeepLinkDto.tergets
-  //   try {
-  //     const androidRes = await this.androidAppDetailsRepo.save(android)
-  //     const iosRes = await this.iosAppDetailsRepo.save(ios)
-  //     const defaultRes = await this.defaultDetailsRepo.save(defaultTarget)
-
-  //     const tergetRes = await this.tergetRepo.save({
-  //       android: androidRes,
-  //       ios: iosRes,
-  //       default: defaultRes
-  //     })
-
-  //     await this.deepLinkRepo.save({
-  //       path: createDeepLinkDto.path,
-  //       tergets: tergetRes
-  //     })
-  //   } catch (error) {
-  //     return new BadGatewayException()
-  //   }
-  // }
   async createDeepLink(createDeepLinkDto: DeepLink) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -114,7 +94,6 @@ export class AppService {
         tergets: tergetRes,
       });
       await queryRunner.commitTransaction();
-      
       return deepLinkRes;
 
     } catch (error) {
@@ -124,4 +103,31 @@ export class AppService {
       await queryRunner.release();
     }
   }
+
+
+  async findAllDeepLinks(deepLinkPaginationDto: DeepLinkPaginationDto) {
+    const { page, limit } = deepLinkPaginationDto
+    const [data, total] = await this.deepLinkRepo.findAndCount({
+      relations: {
+        tergets: {
+          android: true,
+          ios: true,
+          default: true,
+        },
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: {
+        id: 'DESC',
+      },
+    });
+
+    return {
+      data,
+      total,
+      page,
+      pageCount: Math.ceil(total / limit),
+    };
+  }
+
 }
