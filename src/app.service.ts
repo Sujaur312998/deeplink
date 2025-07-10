@@ -1,16 +1,30 @@
 import { BadGatewayException, Injectable } from '@nestjs/common';
 import { DeviceDetectorService } from './detector.service';
-import { config } from 'lib/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepLink } from './entity/deeplink.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { AndroidAppDetails } from './entity/androidaAppdetails.entity';
+import { IOSAppDetails } from './entity/iosAppdetails.entity';
+import { DefaultDetails } from './entity/default.entity';
+import { Tergets } from './entity/tergets.entity';
+
 @Injectable()
 export class AppService {
   constructor(
     @InjectRepository(DeepLink)
     private readonly deepLinkRepo: Repository<DeepLink>,
-    private readonly deviceDetectorService: DeviceDetectorService
+    @InjectRepository(AndroidAppDetails)
+    private readonly androidAppDetailsRepo: Repository<AndroidAppDetails>,
+    @InjectRepository(IOSAppDetails)
+    private readonly iosAppDetailsRepo: Repository<IOSAppDetails>,
+    @InjectRepository(DefaultDetails)
+    private readonly defaultDetailsRepo: Repository<DefaultDetails>,
+    @InjectRepository(Tergets)
+    private readonly tergetRepo: Repository<Tergets>,
+    private readonly deviceDetectorService: DeviceDetectorService,
+    private readonly dataSource: DataSource
   ) { }
+
   async getLink(
     userAgent: string,
     reqPath: string,
@@ -50,36 +64,64 @@ export class AppService {
 
         default:
           return deeplink.tergets.default.fallback;
-
-
-
-        //   if (platform === 'default') {
-        //     console.log(`Default for platform ${platform}`)
-        //     if (typeof targets.default === 'string') {
-        //       return targets.default;
-        //     }
-        //   }
-
-        //   if (typeof target === 'string') {
-        //     console.log(`Simple redirect to ${target}`)
-        //     return target
-        //   }
-
-        //   if (typeof target === 'object' && target.appName) {
-        //     let intentURL = `intent://${target.appPath}#Intent;scheme=${target.appName};package=${target.appPackage};action=android.intent.action.VIEW;category=android.intent.category.DEFAULT;category=android.intent.category.BROWSABLE;`;
-
-        //     if (target.fallback) {
-        //       intentURL += `S.browser_fallback_url=${encodeURIComponent(
-        //         target.fallback
-        //       )}`;
-        //     }
-        //     intentURL += ";end";
-
-        //     return intentURL;
-
       }
     }
 
     return '/';
+  }
+
+  // async createDeepLink(createDeepLinkDto: DeepLink) {
+  //   const { android, ios, default: defaultTarget } = createDeepLinkDto.tergets
+  //   try {
+  //     const androidRes = await this.androidAppDetailsRepo.save(android)
+  //     const iosRes = await this.iosAppDetailsRepo.save(ios)
+  //     const defaultRes = await this.defaultDetailsRepo.save(defaultTarget)
+
+  //     const tergetRes = await this.tergetRepo.save({
+  //       android: androidRes,
+  //       ios: iosRes,
+  //       default: defaultRes
+  //     })
+
+  //     await this.deepLinkRepo.save({
+  //       path: createDeepLinkDto.path,
+  //       tergets: tergetRes
+  //     })
+  //   } catch (error) {
+  //     return new BadGatewayException()
+  //   }
+  // }
+  async createDeepLink(createDeepLinkDto: DeepLink) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const { android, ios, default: defaultTarget } = createDeepLinkDto.tergets;
+
+      const androidRes = await queryRunner.manager.save(this.androidAppDetailsRepo.target, android);
+      const iosRes = await queryRunner.manager.save(this.iosAppDetailsRepo.target, ios);
+      const defaultRes = await queryRunner.manager.save(this.defaultDetailsRepo.target, defaultTarget);
+
+      const tergetRes = await queryRunner.manager.save(this.tergetRepo.target, {
+        android: androidRes,
+        ios: iosRes,
+        default: defaultRes,
+      });
+
+      const deepLinkRes = await queryRunner.manager.save(this.deepLinkRepo.target, {
+        path: createDeepLinkDto.path,
+        tergets: tergetRes,
+      });
+      await queryRunner.commitTransaction();
+      
+      return deepLinkRes;
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new BadGatewayException(error.message);
+    } finally {
+      await queryRunner.release();
+    }
   }
 }
