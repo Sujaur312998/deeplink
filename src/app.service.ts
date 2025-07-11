@@ -76,7 +76,6 @@ export class AppService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
     try {
       const { android, ios, default: defaultTarget } = createDeepLinkDto.tergets;
 
@@ -92,6 +91,7 @@ export class AppService {
 
       const deepLinkRes = await queryRunner.manager.save(this.deepLinkRepo.target, {
         path: createDeepLinkDto.path,
+        name: createDeepLinkDto.name,
         tergets: tergetRes,
       });
       await queryRunner.commitTransaction();

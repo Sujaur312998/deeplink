@@ -9,8 +9,8 @@ export class DeepLink {
   @Column()
   path?: string;
 
-  @Column({nullable: true, default:"deeplink"})
-  name?: string;
+  @Column({ default: 'deeplink' })
+  name: string;
 
   @OneToOne(() => Tergets, { cascade: true, eager: true })
   @JoinColumn()

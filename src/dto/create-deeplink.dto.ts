@@ -47,10 +47,12 @@ export class TergetsDto {
 
 export class CreateDeepLinkDto {
   @IsOptional()
+  @IsString()
   path?: string;
-  
+
   @IsOptional()
-  name: string;
+  @IsString()
+  name?: string;
 
   @ValidateNested()
   @Type(() => TergetsDto)
