@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Query, Post, Req, Res } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Request, Response } from 'express';
-import { DeepLink } from './entity/deeplink.entity';
 import ShortUniqueId from 'short-unique-id';
 import { DeepLinkPaginationDto } from './dto/paginationDto';
+import { CreateDeepLinkDto } from './dto/create-deeplink.dto';
 
 @Controller()
 export class AppController {
@@ -22,7 +22,7 @@ export class AppController {
   }
 
   @Post('create-custom-deeplink')
-  async createDeepLink(@Body() createDeepLinkDto: DeepLink) {
+  async createDeepLink(@Body() createDeepLinkDto: CreateDeepLinkDto) {
     const { randomUUID } = new ShortUniqueId({ length: 10 });
     createDeepLinkDto.path = '/' + randomUUID();
     return await this.appService.createDeepLink(createDeepLinkDto);

@@ -14,7 +14,7 @@ import { Tergets } from './entity/tergets.entity';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.development.local',
+      envFilePath: '.env',
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
